@@ -6,15 +6,13 @@ const { Pool } = pg;
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production'
-    ? { rejectUnauthorized: false }
-    : false,
-  max: Number(process.env.DB_POOL_SIZE || 10),
+  ssl:
+    process.env.NODE_ENV === 'production'
+      ? { rejectUnauthorized: false }
+      : false,
 });
-
-pool.on('error', (err) => {
-  console.error('Unexpected PG error', err);
-  process.exit(1);
-});
+pool.connect()
+  .then(() => console.log('✅ PostgreSQL connected'))
+  .catch(err => console.error('❌ PostgreSQL connection error', err));
 
 export default pool;
