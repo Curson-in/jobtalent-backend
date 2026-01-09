@@ -138,7 +138,7 @@ export const updateTalentProfile = async (req, res, next) => {
 
 
     if (skills && Array.isArray(skills)) {
-      await query('DELETE FROM talent_skills WHERE user_id = $1', [userId]);
+      await pool.query('DELETE FROM talent_skills WHERE user_id = $1', [userId]);
 
       for (const skill of skills) {
         if (!skill) continue;
@@ -245,7 +245,7 @@ export const createTalentProfile = async (req, res) => {
 
     // Insert skills
     if (Array.isArray(skills) && skills.length) {
-      await query('DELETE FROM talent_skills WHERE user_id = $1', [userId]);
+      await pool.query('DELETE FROM talent_skills WHERE user_id = $1', [userId]);
 
       for (const skill of skills) {
         await pool.query(
