@@ -305,30 +305,33 @@ export const uploadProfilePhoto = async (req, res) => {
 export const uploadResume = async (req, res) => {
   try {
     const userId = req.user.id;
-    const resumeUrl = req.file?.path;
 
-    if (!resumeUrl) {
-      return res.status(400).json({ message: 'No resume uploaded' });
+    if (!req.file) {
+      return res.status(400).json({ message: "No resume uploaded" });
     }
+
+    // ✅ SAVE ONLY FILENAME
+    const filename = req.file.filename;
 
     const result = await pool.query(
       `
       UPDATE profiles
-      SET resume_url = $1, updated_at = NOW()
+      SET resume_file = $1, updated_at = NOW()
       WHERE user_id = $2
-      RETURNING resume_url
+      RETURNING resume_file
       `,
-      [resumeUrl, userId]
+      [filename, userId]
     );
 
     res.json({
-      resume: result.rows[0].resume_url
+      resumeFile: result.rows[0].resume_file
     });
   } catch (error) {
-    console.error('❌ Resume upload failed:', error);
-    res.status(500).json({ message: 'Resume upload failed' });
+    console.error("❌ Resume upload failed:", error);
+    res.status(500).json({ message: "Resume upload failed" });
   }
 };
+
 
 
 

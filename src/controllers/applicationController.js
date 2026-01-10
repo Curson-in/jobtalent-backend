@@ -73,35 +73,6 @@ export const getMyApplications = async (req, res, next) => {
 };
 
 
-export const downloadResume = async (req, res) => {
-  try {
-    const { resumeUrl } = req.query;
-
-    if (!resumeUrl) {
-      return res.status(400).json({ message: 'Resume URL missing' });
-    }
-
-    // 🔐 SECURITY: only allow cloudinary resumes
-    if (!resumeUrl.includes('res.cloudinary.com')) {
-      return res.status(403).json({ message: 'Invalid resume source' });
-    }
-
-    const response = await axios.get(resumeUrl, {
-      responseType: 'stream'
-    });
-
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader(
-      'Content-Disposition',
-      'attachment; filename="resume.pdf"'
-    );
-
-    response.data.pipe(res);
-  } catch (err) {
-    console.error('❌ Resume download failed:', err.message);
-    res.status(500).json({ message: 'Failed to download resume' });
-  }
-};
 
 export const getApplicationsForJob = async (req, res, next) => {
   try {
@@ -135,7 +106,7 @@ export const getApplicationsForJob = async (req, res, next) => {
     u.first_name,
     u.last_name,
     u.email,
-    p.resume_url
+    p.resume_file
   FROM applications a
   JOIN users u ON a.user_id = u.id
   LEFT JOIN profiles p 

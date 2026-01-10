@@ -2,7 +2,8 @@ import express from 'express';
 import * as profileController from '../controllers/profileController.js';
 import { authMiddleware, requireRole } from '../middleware/auth.js';
 import { USER_ROLES } from '../config/constants.js';
-import upload from '../middleware/upload.js';
+import { uploadResume } from '../middleware/resumeUpload.js';
+
 import uploadPhoto from '../middleware/uploadPhoto.js';
 
 const router = express.Router();
@@ -14,16 +15,17 @@ router.post(
   '/talent',
   authMiddleware,
   requireRole([USER_ROLES.TALENT]),
-  upload.single('resume'),
+  uploadResume.single('resume'),
   profileController.createTalentProfile
 );
 
 router.post(
   '/resume',
   authMiddleware,
-  upload.single('resume'),
+  uploadResume.single('resume'),
   profileController.uploadResume
 );
+
 
 
 // GET TALENT PROFILE

@@ -2,7 +2,6 @@ import express from 'express';
 import * as applicationController from '../controllers/applicationController.js';
 import { authMiddleware, requireRole } from '../middleware/auth.js';
 import { USER_ROLES } from '../config/constants.js';
-import { downloadResume } from '../controllers/applicationController.js';
 
 const router = express.Router();
 
@@ -28,12 +27,7 @@ router.get(
   applicationController.getApplicationsForJob
 );
 
-router.get(
-  "/download",
-  authMiddleware,
-  requireRole([USER_ROLES.EMPLOYER]),
-  downloadResume
-);
+
 
 router.put(
   '/:applicationId',

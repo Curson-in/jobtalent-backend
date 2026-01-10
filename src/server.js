@@ -2,10 +2,13 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import express from "express";
+import fs from "fs";
 import cors from "cors";
 import helmet from "helmet";
 import passport from "passport";
 import cron from "node-cron";
+import { RESUME_DIR, AI_RESUME_DIR } from "./utils/storagePaths.js";
+import fileRoutes from "./routes/file.routes.js";
 
 /* ========= CORE CONFIG ========= */
 import "./config/passport.js";
@@ -42,6 +45,12 @@ import boostRoutes from "./routes/boostRoutes.js";
 
 /* ========= APP INIT ========= */
 const app = express();
+
+[RESUME_DIR, AI_RESUME_DIR].forEach(dir => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+});
 
 /* =====================================================
    ✅ CORS — MUST BE FIRST (THIS FIXES YOUR ERROR)
@@ -106,6 +115,9 @@ app.use("/api/messages", messageRoutes);
 app.use("/api/subscription", subscriptionRoutes);
 app.use("/api/boosts", boostRoutes);
 
+app.use("/api/files", fileRoutes);
+
+
 /* ========= HEALTH ========= */
 app.get("/health", (req, res) => {
   res.json({
@@ -120,6 +132,7 @@ app.use(errorHandler);
 app.use((req, res) => {
   res.status(404).json({ message: "Route not found" });
 });
+
 
 /* ========= SERVER ========= */
 const PORT = process.env.PORT || 5000;
