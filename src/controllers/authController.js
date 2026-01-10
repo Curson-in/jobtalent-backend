@@ -12,6 +12,16 @@ export const signup = async (req, res, next) => {
     if (!email || !password || !role || !firstName || !lastName) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
+
+    // 🔐 Password must contain letters + numbers (min 6)
+const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{6,}$/;
+
+if (!passwordRegex.test(password)) {
+  return res.status(400).json({
+    message: 'Password must be at least 6 characters and include letters and numbers'
+  });
+}
+
     
     if (!Object.values(USER_ROLES).includes(role)) {
       return res.status(400).json({ message: 'Invalid role' });
