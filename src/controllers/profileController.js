@@ -202,7 +202,8 @@ export const createTalentProfile = async (req, res) => {
       skills = []
     } = req.body;
 
-    const resumeUrl = req.file?.path || null;
+    // ✅ SAVE ONLY FILENAME (CONSISTENT WITH REST OF SYSTEM)
+    const resumeFile = req.file?.filename || null;
 
     const profileResult = await pool.query(
       `
@@ -216,7 +217,7 @@ export const createTalentProfile = async (req, res) => {
         summary,
         projects,
         experience_details,
-        resume_url,
+        resume_file,
         updated_at
       )
       VALUES ($1, 'talent', $2, $3, $4, $5, $6, $7, $8, $9, NOW())
@@ -229,7 +230,7 @@ export const createTalentProfile = async (req, res) => {
         summary = EXCLUDED.summary,
         projects = EXCLUDED.projects,
         experience_details = EXCLUDED.experience_details,
-        resume_url = COALESCE(EXCLUDED.resume_url, profiles.resume_url),
+        resume_file = COALESCE(EXCLUDED.resume_file, profiles.resume_file),
         updated_at = NOW()
       RETURNING *;
       `,
@@ -242,15 +243,16 @@ export const createTalentProfile = async (req, res) => {
         summary,
         projects,
         experience_details,
-        resumeUrl
+        resumeFile
       ]
     );
 
-    // Insert skills
+    // Insert skills (UNCHANGED)
     if (Array.isArray(skills) && skills.length) {
       await pool.query('DELETE FROM talent_skills WHERE user_id = $1', [userId]);
 
       for (const skill of skills) {
+        if (!skill) continue;
         await pool.query(
           'INSERT INTO talent_skills (user_id, skill, verified) VALUES ($1, $2, false)',
           [userId, skill]
@@ -258,15 +260,19 @@ export const createTalentProfile = async (req, res) => {
       }
     }
 
+    // Mark user as onboarded (UNCHANGED)
     await pool.query(
       'UPDATE users SET is_onboarded = TRUE WHERE id = $1',
       [userId]
     );
 
+    // ✅ RETURN RESUME URL IN SAME FORMAT AS PROFILE API
     res.status(200).json({
       profile: {
         ...profileResult.rows[0],
-        resume: profileResult.rows[0].resume_url
+        resume: profileResult.rows[0].resume_file
+          ? `/api/files/resume/${profileResult.rows[0].resume_file}`
+          : null
       }
     });
   } catch (error) {
@@ -274,6 +280,7 @@ export const createTalentProfile = async (req, res) => {
     res.status(500).json({ message: 'Failed to complete onboarding' });
   }
 };
+
 
 /* =========================
    UPLOAD PROFILE PHOTO
