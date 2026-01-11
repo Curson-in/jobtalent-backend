@@ -1,5 +1,13 @@
 import pool from '../config/database.js';
 
+let cache = {
+  data: null,
+  lastFetch: 0
+};
+
+const CACHE_TTL = 30 * 1000; // 30 seconds
+
+
 /* =========================
    UPSERT AGGREGATED JOB
 ========================= */
@@ -53,6 +61,13 @@ export const upsertAggregatedJob = async (job) => {
    FEED QUERY (UNIQUE COMPANY)
 ========================= */
 export const getFeedJobs = async () => {
+  const now = Date.now();
+
+  // ✅ return from cache
+  if (cache.data && now - cache.lastFetch < CACHE_TTL) {
+    return cache.data;
+  }
+
   const sql = `
     SELECT *
     FROM (
@@ -66,10 +81,28 @@ export const getFeedJobs = async () => {
       WHERE j.status = 'active'
     ) ranked
     WHERE rn = 1
-    ORDER BY created_at DESC
+    ORDER BY
+      CASE
+        WHEN location ILIKE '%pune%' THEN 1
+        WHEN location ILIKE '%india%' THEN 1
+        WHEN location ILIKE '%bangalore%' THEN 1
+        WHEN location ILIKE '%bengaluru%' THEN 1
+        WHEN location ILIKE '%hyderabad%' THEN 1
+        WHEN location ILIKE '%chennai%' THEN 1
+        WHEN location ILIKE '%remote%' THEN 2
+        ELSE 3
+      END,
+      created_at DESC
     LIMIT 50;
   `;
 
   const result = await pool.query(sql);
+
+  // ✅ store in cache
+  cache = {
+    data: result.rows,
+    lastFetch: now
+  };
+
   return result.rows;
 };
