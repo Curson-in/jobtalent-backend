@@ -14,9 +14,9 @@ const DODO_API_URL = process.env.DODO_API_URL; // https://test.dodopayments.com
  * (USE REAL IDS FROM DODO DASHBOARD)
  */
 const DODO_PRODUCTS = {
-  monthly_99: "pdt_0NVuiQSDfGDczXmT9J3Bw",     // ₹49
-  quarterly_149: "pdt_0NVQvNfR28JqN72UdYWIR",    // ₹99
-  yearly_399: "pdt_0NVuifC0ggXpb7mReG7s9"       // ₹299
+  monthly_99: "pdt_0NVuiQSDfGDczXmT9J3Bw",     
+  quarterly_149: "pdt_0NVuiYFtIVAk55fpQSVkM",    
+  yearly_399: "pdt_0NVuifC0ggXpb7mReG7s9"       
 };
 
 /**
