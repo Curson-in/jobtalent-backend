@@ -71,7 +71,10 @@ export const getTalentProfile = async (req, res, next) => {
     );
 
     profile.skills = skillsRes.rows.map(r => r.skill);
-    profile.resume = profile.resume_url;
+    profile.resume = profile.resume_file
+  ? `/api/files/resume/${profile.resume_file}`
+  : null;
+
 
     return res.json({ profile });
   } catch (err) {
