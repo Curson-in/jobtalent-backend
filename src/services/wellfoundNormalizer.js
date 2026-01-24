@@ -2,8 +2,9 @@ export const normalizeWellfoundJob = (job) => {
   return {
     title: job.title.slice(0, 255),
 
-    description:
-      "Apply via Wellfound to view full job description.",
+   description:
+  "This role offers an opportunity to work with a fast-growing team, build impactful products, and develop industry-relevant skills.",
+
 
     location: job.location || "India / Remote",
 

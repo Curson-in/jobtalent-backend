@@ -2,6 +2,8 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import express from "express";
+import cookieParser from "cookie-parser";
+
 import fs from "fs";
 import cors from "cors";
 import helmet from "helmet";
@@ -30,9 +32,10 @@ import passwordResetRoutes from "./routes/passwordResetRoutes.js";
 import jobRoutes from "./routes/jobRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
 import applicationRoutes from "./routes/applicationRoutes.js";
-import paymentRoutes from "./routes/paymentRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import employerRoutes from "./routes/employer.routes.js";
+import cashfreeRoutes from "./routes/cashfree.routes.js";
+
 
 // AI / Resume / Messages
 import aiRoutes from "./routes/ai.routes.js";
@@ -42,6 +45,9 @@ import messageRoutes from "./routes/message.routes.js";
 // Subscription / Boost
 import subscriptionRoutes from "./routes/subscriptionRoutes.js";
 import boostRoutes from "./routes/boostRoutes.js";
+import razorpayRoutes from "./routes/razorpay.routes.js";
+
+
 
 /* ========= APP INIT ========= */
 const app = express();
@@ -68,10 +74,6 @@ app.use(
 /* =====================================================
    ✅ WEBHOOK RAW BODY (ONLY FOR DODO)
 ===================================================== */
-app.use(
-  "/api/payments/webhook/dodo",
-  express.raw({ type: "application/json" })
-);
 
 /* =====================================================
    ✅ NORMAL BODY PARSERS (AFTER WEBHOOK)
@@ -83,12 +85,12 @@ app.use(express.urlencoded({ extended: true }));
 app.use(helmet());
 app.use(passport.initialize());
 
+app.use(cookieParser());
 /* =====================================================
    ROUTES
 ===================================================== */
-
+app.use("/api", cashfreeRoutes);
 // Payments (includes create-subscription + webhook)
-app.use("/api", paymentRoutes);
 
 // Auth
 app.use("/api/auth", authRoutes);
@@ -99,6 +101,8 @@ app.use("/api/auth", passwordResetRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/applications", applicationRoutes);
+app.use("/api", razorpayRoutes);
+
 
 // Admin
 app.use("/api/admin", adminRoutes);

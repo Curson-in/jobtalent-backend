@@ -106,15 +106,6 @@ export const getJobs = async (req, res) => {
   let where = `WHERE j.status = 'active'`;
 
 
- if (search) {
-  values.push(`%${search}%`);
-  where += `
-    AND (
-      title ILIKE $${values.length}
-      OR location ILIKE $${values.length}
-    )
-  `;
-}
 
 
   /* 🔍 SEARCH */
@@ -186,21 +177,35 @@ export const getJobs = async (req, res) => {
   values.push((page - 1) * limit);
 
   const sql = `
-    SELECT *
-    FROM (
-      SELECT
-        j.*,
-        ROW_NUMBER() OVER (
-          PARTITION BY j.company_name
-          ORDER BY j.created_at DESC
-        ) AS company_rank
-      FROM jobs j
-      ${where}
-    ) ranked
-    ORDER BY company_rank ASC, created_at DESC
-    LIMIT $${values.length - 1}
-    OFFSET $${values.length}
-  `;
+  SELECT *
+  FROM (
+    SELECT
+      j.id,
+      j.title,
+      j.description,
+      j.location,
+      j.salary,
+      j.job_type,
+      j.source,
+      j.external_url,
+      j.status,
+      j.created_at,
+      COALESCE(j.company_name, c.name) AS company_name,
+      c.logo_url AS company_logo,
+      ROW_NUMBER() OVER (
+        PARTITION BY COALESCE(j.company_name, c.name)
+        ORDER BY j.created_at DESC
+      ) AS company_rank
+    FROM jobs j
+    LEFT JOIN companies c ON j.company_id = c.id
+    ${where}
+  ) ranked
+  ORDER BY ranked.company_rank ASC, ranked.created_at DESC
+  LIMIT $${values.length - 1}
+  OFFSET $${values.length}
+`;
+
+
 
   const result = await pool.query(sql, values);
   res.json({ jobs: result.rows });

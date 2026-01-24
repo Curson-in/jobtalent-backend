@@ -1,7 +1,9 @@
 import axios from "axios";
 import * as cheerio from "cheerio";
 
-const BASE_URL = "https://wellfound.com/jobs";
+const BASE_URL =
+  "https://wellfound.com/jobs?locations[]=India&job_types[]=internship&job_types[]=full_time";
+
 
 export const fetchWellfoundJobs = async () => {
   const url = `${BASE_URL}?locations[]=India&remote=true`;

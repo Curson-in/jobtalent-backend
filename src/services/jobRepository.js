@@ -83,13 +83,13 @@ export const getFeedJobs = async () => {
     WHERE rn = 1
     ORDER BY
       CASE
-        WHEN location ILIKE '%pune%' THEN 1
-        WHEN location ILIKE '%india%' THEN 1
-        WHEN location ILIKE '%bangalore%' THEN 1
-        WHEN location ILIKE '%bengaluru%' THEN 1
-        WHEN location ILIKE '%hyderabad%' THEN 1
-        WHEN location ILIKE '%chennai%' THEN 1
-        WHEN location ILIKE '%remote%' THEN 2
+        WHEN j.location ILIKE '%pune%' THEN 1
+        WHEN j.location ILIKE '%india%' THEN 1
+        WHEN j.location ILIKE '%bangalore%' THEN 1
+        WHEN j.location ILIKE '%bengaluru%' THEN 1
+        WHEN j.location ILIKE '%hyderabad%' THEN 1
+        WHEN j.location ILIKE '%chennai%' THEN 1
+        WHEN j.location ILIKE '%remote%' THEN 2
         ELSE 3
       END,
       created_at DESC

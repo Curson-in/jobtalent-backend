@@ -22,6 +22,12 @@ import { normalizeDarwinboxJob } from "./darwinboxNormalizer.js";
 import { FRESHTEAM_COMPANIES } from "../config/freshteam.js";
 import { fetchFreshteamJobs } from "./freshteamService.js";
 import { normalizeFreshteamJob } from "./freshteamNormalizer.js";
+import { fetchInternshalaJobs } from "./internshalaService.js";
+import { normalizeInternshalaJob } from "./internshalaNormalizer.js";
+import { fetchLinkedInJobs } from "./linkedinService.js";
+import { normalizeLinkedInJob } from "./linkedinNormalizer.js";
+import { canUseSerpApi } from "./serpApiLimiter.js";
+
 
 
 export const scrapeJobs = async () => {
@@ -63,6 +69,38 @@ export const scrapeJobs = async () => {
       console.error(` ${company.name}`, err.message);
     }
   }
+};
+
+export const scrapeInternshalaJobs = async () => {
+  console.log("🔄 Internshala scraping started");
+
+  const jobs = await fetchInternshalaJobs();
+  const limited = jobs.slice(0, 40);
+
+  for (const job of limited) {
+    const normalized = normalizeInternshalaJob(job);
+    await upsertAggregatedJob(normalized);
+  }
+
+  console.log(`✅ Internshala: ${limited.length} internships`);
+};
+
+export const scrapeLinkedInJobs = async () => {
+  if (!canUseSerpApi()) {
+    console.log("⛔ SerpApi limit reached. Skipping LinkedIn jobs.");
+    return;
+  }
+
+  console.log("🔄 LinkedIn (Google Jobs) scraping started");
+
+  const jobs = await fetchLinkedInJobs();
+
+  for (const job of jobs.slice(0, 10)) { // keep LOW
+    const normalized = normalizeLinkedInJob(job);
+    await upsertAggregatedJob(normalized);
+  }
+
+  console.log(`✅ LinkedIn: ${jobs.length} jobs`);
 };
 
 export const scrapeDarwinboxJobs = async () => {

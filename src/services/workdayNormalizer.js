@@ -15,6 +15,8 @@ export const normalizeWorkdayJob = (job) => {
       : null,
     description: job.jobDescription || "",
     posted_at: job.postedOn,
+    job_type: "internship",
+  is_entry_level: true,
     raw: job
   };
 };
