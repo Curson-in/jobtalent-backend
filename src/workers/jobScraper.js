@@ -1,53 +1,57 @@
 import cron from 'node-cron';
-import { scrapeJobs,scrapeInternshalaJobs, scrapeLinkedInJobs, scrapeDarwinboxJobs,scrapeFreshteamJobs, scrapeSmartRecruitersJobs, scrapeWorkdayJobs, scrapeWellfoundJobs, scrapeLeverJobs, expireStaleJobs, } from '../services/jobScraperService.js';
+import {
+  scrapeJobs,
+  scrapeInternshalaJobs,
+  scrapeLinkedInJobs,
+  scrapeDarwinboxJobs,
+  scrapeFreshteamJobs,
+  scrapeSmartRecruitersJobs,
+  scrapeWorkdayJobs,
+  scrapeWellfoundJobs,
+  scrapeLeverJobs,
+  expireStaleJobs,
+} from '../services/jobScraperService.js';
 import { scrapeCareerPages } from "../services/careerScraper.js";
 
 const shouldRunLinkedIn = () => {
   const day = new Date().getDay(); // 0 = Sunday
-  return day === 0; // once per week
+  return day === 0;
 };
-
 
 export const startJobScraperWorker = () => {
-  if (process.env.SCRAPER_ENABLED === 'true') {
+  if (process.env.SCRAPER_ENABLED !== 'true') return;
 
-    scrapeJobs();
-    scrapeInternshalaJobs();
-    scrapeCareerPages();
-    scrapeDarwinboxJobs();
-    scrapeFreshteamJobs();
-    scrapeSmartRecruitersJobs();
-    scrapeWorkdayJobs();
-    scrapeLeverJobs();
-    scrapeWellfoundJobs();
-    expireStaleJobs();
+  // 🔹 Startup scrape (NO LinkedIn here)
+  scrapeJobs();
+  scrapeInternshalaJobs();
+  scrapeCareerPages();
+  scrapeDarwinboxJobs();
+  scrapeFreshteamJobs();
+  scrapeSmartRecruitersJobs();
+  scrapeWorkdayJobs();
+  scrapeLeverJobs();
+  scrapeWellfoundJobs();
+  expireStaleJobs();
 
-    // ✅ LinkedIn ONLY if allowed
+  // ⏰ Hourly cron
+  cron.schedule('0 * * * *', async () => {
+    await scrapeJobs();
+    await scrapeInternshalaJobs();
+    await scrapeCareerPages();
+    await scrapeDarwinboxJobs();
+    await scrapeFreshteamJobs();
+    await scrapeSmartRecruitersJobs();
+    await scrapeWorkdayJobs();
+    await scrapeLeverJobs();
+    await scrapeWellfoundJobs();
+    await expireStaleJobs();
+
+    // ✅ LinkedIn ONLY once per week
     if (shouldRunLinkedIn()) {
-      scrapeLinkedInJobs();
+      console.log('🟦 Weekly LinkedIn scrape running');
+      await scrapeLinkedInJobs();
     }
+  });
 
-    cron.schedule('0 * * * *', async () => {
-
-      await scrapeJobs();
-      await scrapeInternshalaJobs();
-      await scrapeCareerPages();
-      await scrapeDarwinboxJobs();
-      await scrapeFreshteamJobs();
-      await scrapeSmartRecruitersJobs();
-      await scrapeWorkdayJobs();
-      await scrapeLeverJobs();
-      await scrapeWellfoundJobs();
-      await expireStaleJobs();
-
-      // ✅ LinkedIn once per week
-      if (shouldRunLinkedIn()) {
-        await scrapeLinkedInJobs();
-      }
-
-    });
-
-    console.log('✅ Job scraper worker started');
-  }
+  console.log('✅ Job scraper worker started');
 };
-
