@@ -14,9 +14,13 @@ import {
 import { scrapeCareerPages } from "../services/careerScraper.js";
 
 const shouldRunLinkedIn = () => {
-  const day = new Date().getDay(); // 0 = Sunday
+  // IST = UTC + 5:30
+  const now = new Date();
+  const istTime = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
+  const day = istTime.getDay(); // 0 = Sunday (IST)
   return day === 0;
 };
+
 
 export const startJobScraperWorker = () => {
   if (process.env.SCRAPER_ENABLED !== 'true') return;

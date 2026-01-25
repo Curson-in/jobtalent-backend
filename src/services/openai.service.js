@@ -9,114 +9,59 @@ export async function enhanceResumeWithAI(extractedText) {
     throw new Error("No resume text provided to AI");
   }
 
-const prompt = `
-You are a SENIOR TECH RECRUITER, ATS SPECIALIST, and CAREER COACH
-with experience reviewing 10,000+ software engineering resumes.
+  // UPDATED PROMPT: Focused on Layout, Spacing, and readability
+  const prompt = `
+You are a SENIOR TECH RECRUITER and CAREER COACH.
+This is a PAID PREMIUM REPORT. The output must be visually spacious and easy to read.
 
-This is a PAID, PREMIUM resume enhancement feature.
+GOAL: Provide a deep, actionable resume audit.
 
-GOAL:
-Provide a DEEP, HIGH-VALUE, ACTIONABLE resume improvement report.
-This is NOT a rewrite of the resume.
-This IS a professional coaching document.
+FORMATTING RULES (STRICT):
+1. SECTIONS: Start every main section with a Number (e.g., "1. PROFESSIONAL SUMMARY").
+2. SPACING: You MUST put TWO empty lines between major sections.
+3. SUB-POINTS: Use a simple dash "- " for bullet points.
+4. PARAGRAPHS: Put ONE empty line between paragraphs for readability.
+5. NO MARKDOWN: Do not use **, ##, or other symbols. Just plain text with good spacing.
 
-IMPORTANT RULES:
-- DO NOT include the candidate's name
-- DO NOT repeat the original resume text
-- DO NOT rewrite the full resume
-- DO NOT keep it short
-- DO NOT be generic
+STRUCTURE OF THE REPORT:
 
-ABSOLUTE OUTPUT RULES (MANDATORY):
-- DO NOT use Markdown
-- DO NOT use #, ##, ### anywhere
-- DO NOT use quotation marks " "
-- DO NOT wrap text in quotes
-- Use plain professional report formatting only
-- Section titles must be plain text (NO symbols)
-- Use numbered sections like: 1. TITLE
-- Use bullet points with dash (-) only
+1. PROFESSIONAL SUMMARY – AUDIT & EXAMPLES
+   - Critique the current summary.
+   - Provide 2 HIGH-IMPACT example summaries.
 
+2. EXPERIENCE SECTION – BEFORE VS AFTER
+   - Select 3 weak bullet points from the resume.
+   - Show the "Before" (Weak) version.
+   - Show the "After" (Strong) version.
+   - Explain the "Why".
 
-QUALITY BAR (VERY IMPORTANT):
-- Output must feel like a detailed resume audit
-- Each section must be MULTI-PARAGRAPH or MULTI-BULLET
-- Provide concrete examples, explanations, and reasoning
-- Assume the user is serious about job hunting
+3. PROJECT IMPACT ANALYSIS
+   - How to better quantify these projects.
+   - Provide 3 example bullet points with metrics (numbers/%).
 
-========================
-OUTPUT FORMAT (STRICT)
-========================
+4. SKILLS GAP ANALYSIS
+   - What key tech stack keywords are missing?
+   - How to group skills for ATS readability.
 
-AI RESUME ENHANCEMENT REPORT
+5. ATS COMPLIANCE CHECK
+   - formatting risks found.
+   - keyword stuffing advice.
 
-1. PROFESSIONAL SUMMARY – HOW TO IMPROVE
-Explain:
-- What a strong summary should communicate
-- What is likely missing or weak
-- Provide 2–3 HIGH-QUALITY example summaries (NOT copied from resume)
+6. FINAL RECRUITER VERDICT
+   - One paragraph on immediate next steps.
 
-2. EXPERIENCE SECTION – BULLET POINT TRANSFORMATION
-For EACH example:
-- Show a weak/common bullet (generic example)
-- Show a STRONG improved version
-- Explain WHY the improved version is better
-Provide at least 5–7 bullet transformations.
-
-3. PROJECTS SECTION – DEPTH & IMPACT
-Explain:
-- How projects should be structured
-- What recruiters look for in project descriptions
-- How to quantify impact
-Provide 3–4 example project bullets with metrics.
-
-4. SKILLS SECTION – WHAT TO ADD / REMOVE / REORGANIZE
-Explain:
-- Missing technical skills based on the resume
-- Skills that should be grouped or reordered
-- ATS-friendly skill categorization
-Provide a sample optimized skills layout.
-
-5. ATS OPTIMIZATION – VERY IMPORTANT
-Explain in detail:
-- Keyword strategy
-- Job title alignment
-- Formatting rules ATS systems prefer
-- Common ATS mistakes to avoid
-
-6. FORMATTING & STRUCTURE REVIEW
-Explain:
-- Ideal resume length
-- Section order for this profile
-- Font, spacing, bullet consistency
-- PDF vs DOCX considerations
-
-7. RED FLAGS, GAPS & RISKS (IF ANY)
-Explain:
-- Any career risks visible
-- Missing experience signals
-- How to mitigate these risks strategically
-
-8. FINAL RECRUITER ADVICE
-Provide:
-- Clear next steps
-- How to customize resume per job
-- How to stand out in interviews using this resume
-
+RESUME TEXT TO ANALYZE:
 ${extractedText}
 `;
 
-
-
-
   const response = await client.chat.completions.create({
-    model: "gpt-4o-mini",
-    temperature: 0.4,          
-    max_tokens: 1200,          // allows full rewrite
+    model: "gpt-4o-mini", // Cost effective, high quality
+    temperature: 0.5,           
+    max_tokens: 1500,          
     messages: [
       {
         role: "system",
-        content: "You are a world-class  writer for tech professionals."
+        content: "You are a professional resume writer. Output clean, spacious, plain text reports."
       },
       {
         role: "user",

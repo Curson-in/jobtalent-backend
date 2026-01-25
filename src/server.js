@@ -46,6 +46,10 @@ import messageRoutes from "./routes/message.routes.js";
 import subscriptionRoutes from "./routes/subscriptionRoutes.js";
 import boostRoutes from "./routes/boostRoutes.js";
 import razorpayRoutes from "./routes/razorpay.routes.js";
+import blogRoutes from "./routes/blog.routes.js";
+
+
+
 
 
 
@@ -120,6 +124,10 @@ app.use("/api/subscription", subscriptionRoutes);
 app.use("/api/boosts", boostRoutes);
 
 app.use("/api/files", fileRoutes);
+app.use("/api", blogRoutes);
+
+
+
 
 
 /* ========= HEALTH ========= */
