@@ -2,6 +2,7 @@ export const LEVER_COMPANIES = [
 
   // 🇮🇳 INDIA BASED
   { name: "Razorpay", slug: "razorpay" },
+  { name: "Fampay", slug: "fampay" },
   { name: "CRED", slug: "cred" },
   { name: "Groww", slug: "groww" },
   { name: "Dream11", slug: "dream11" },

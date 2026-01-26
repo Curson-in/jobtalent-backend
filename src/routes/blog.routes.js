@@ -8,18 +8,26 @@ const router = express.Router();
 /* =======================
    GET ALL BLOGS (LIST)
 ======================= */
+/* =======================
+   GET ALL BLOGS (LIST - SORTED BY POPULARITY)
+======================= */
 router.get("/blogs", optionalAuth, async (req, res) => {
   const { rows } = await pool.query(`
     SELECT 
       b.id, b.title,
       LEFT(b.content, 300) AS excerpt,
-      b.tags, b.upvotes, b.downvotes,
+      b.tags, 
+      COALESCE(b.upvotes, 0) as upvotes, 
+      b.downvotes,
       b.created_at,
-      u.first_name AS author,  -- CHANGED: Only fetching first_name
+      u.first_name AS author,
       (SELECT COUNT(*) FROM blog_comments WHERE blog_id = b.id)::int AS "commentCount"
     FROM blogs b
     JOIN users u ON u.id = b.user_id
-    ORDER BY b.created_at DESC
+    ORDER BY 
+      b.upvotes DESC,          -- 1. High Upvotes First
+      "commentCount" DESC,     -- 2. Then High Comments
+      b.created_at DESC        -- 3. Then Newest
   `);
 
   res.json(rows);

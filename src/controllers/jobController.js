@@ -90,6 +90,9 @@ export const getFeedJobs = async (req, res, next) => {
 /* =========================
    JOB LIST + FILTERS
 ========================= */
+/* =========================
+   JOB LIST + FILTERS
+========================= */
 export const getJobs = async (req, res) => {
   const userId = req.user?.id || null;
 
@@ -105,21 +108,17 @@ export const getJobs = async (req, res) => {
   const values = [];
   let where = `WHERE j.status = 'active'`;
 
-
-
-
   /* 🔍 SEARCH */
   if (search) {
     values.push(`%${search}%`);
     where += `
       AND (
-        j.title ILIKE $${values.length}
+        j.title ILIKE $${values.length} 
         OR j.company_name ILIKE $${values.length}
         OR j.location ILIKE $${values.length}
       )
     `;
   }
-
 
   /* ✅ JOB TYPE */
   const requestedTypes = Array.isArray(jobType)
@@ -164,9 +163,9 @@ export const getJobs = async (req, res) => {
     values.push(userId);
     where += `
       AND NOT EXISTS (
-        SELECT 1
-        FROM applications a
-        WHERE a.job_id = j.id
+        SELECT 1 
+        FROM applications a 
+        WHERE a.job_id = j.id 
         AND a.user_id = $${values.length}
       )
     `;
@@ -179,33 +178,39 @@ export const getJobs = async (req, res) => {
   const sql = `
   SELECT *
   FROM (
-    SELECT
+    SELECT 
       j.id,
-      j.title,
-      j.description,
-      j.location,
-      j.salary,
-      j.job_type,
+      j.title, 
+      j.description, 
+      j.location, 
+      j.salary, 
+      j.job_type, 
       j.source,
-      j.external_url,
-      j.status,
-      j.created_at,
-      COALESCE(j.company_name, c.name) AS company_name,
+      j.external_url, 
+      j.status, 
+      j.created_at, 
+      COALESCE(j.company_name, c.name) AS company_name, 
       c.logo_url AS company_logo,
       ROW_NUMBER() OVER (
-        PARTITION BY COALESCE(j.company_name, c.name)
+        PARTITION BY COALESCE(j.company_name, c.name) 
         ORDER BY j.created_at DESC
       ) AS company_rank
     FROM jobs j
     LEFT JOIN companies c ON j.company_id = c.id
     ${where}
   ) ranked
-  ORDER BY ranked.company_rank ASC, ranked.created_at DESC
-  LIMIT $${values.length - 1}
+  ORDER BY 
+    /* 🚀 PRIORITIZE INTERNSHIPS HERE */
+    CASE 
+      WHEN LOWER(ranked.job_type) = 'internship' THEN 0 
+      WHEN ranked.title ILIKE '%intern%' THEN 0
+      ELSE 1 
+    END ASC,
+    ranked.company_rank ASC, 
+    ranked.created_at DESC
+  LIMIT $${values.length - 1} 
   OFFSET $${values.length}
 `;
-
-
 
   const result = await pool.query(sql, values);
   res.json({ jobs: result.rows });

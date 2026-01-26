@@ -22,11 +22,13 @@ import { normalizeDarwinboxJob } from "./darwinboxNormalizer.js";
 import { FRESHTEAM_COMPANIES } from "../config/freshteam.js";
 import { fetchFreshteamJobs } from "./freshteamService.js";
 import { normalizeFreshteamJob } from "./freshteamNormalizer.js";
-import { fetchInternshalaJobs } from "./internshalaService.js";
-import { normalizeInternshalaJob } from "./internshalaNormalizer.js";
+
 import { fetchLinkedInJobs } from "./linkedinService.js";
 import { normalizeLinkedInJob } from "./linkedinNormalizer.js";
 import { canUseSerpApi } from "./serpApiLimiter.js";
+import { ASHBY_COMPANIES } from '../config/ashby.js';
+import { fetchAshbyJobs } from './ashbyService.js';
+import { normalizeAshbyJob } from './ashbyNormalizer.js';
 
 
 
@@ -71,19 +73,7 @@ export const scrapeJobs = async () => {
   }
 };
 
-export const scrapeInternshalaJobs = async () => {
-  console.log("🔄 Internshala scraping started");
 
-  const jobs = await fetchInternshalaJobs();
-  const limited = jobs.slice(0, 40);
-
-  for (const job of limited) {
-    const normalized = normalizeInternshalaJob(job);
-    await upsertAggregatedJob(normalized);
-  }
-
-  console.log(`✅ Internshala: ${limited.length} internships`);
-};
 
 export const scrapeLinkedInJobs = async () => {
   if (!canUseSerpApi()) {
@@ -101,6 +91,27 @@ export const scrapeLinkedInJobs = async () => {
   }
 
   console.log(`✅ LinkedIn: ${jobs.length} jobs`);
+};
+
+export const scrapeAshbyJobs = async () => {
+  console.log("🔄 Ashby scraping started");
+
+  for (const company of ASHBY_COMPANIES) {
+    try {
+      const jobs = await fetchAshbyJobs(company.slug);
+      
+      for (const job of jobs) {
+        const normalized = normalizeAshbyJob(job, company.name);
+        await upsertAggregatedJob(normalized);
+      }
+      
+      if (jobs.length > 0) {
+        console.log(`✅ Ashby ${company.name}: ${jobs.length} jobs`);
+      }
+    } catch (err) {
+      console.error(`❌ Ashby ${company.name} failed`);
+    }
+  }
 };
 
 export const scrapeDarwinboxJobs = async () => {

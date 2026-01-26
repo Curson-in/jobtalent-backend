@@ -28,7 +28,7 @@ export const welcomeEmail = (name) => `
                 </p>
 
                 <p style="margin:0 0 20px; font-size:15px; color:#374151; line-height:1.6;">
-                  Your Curson account has been successfully created. You now have access to a platform designed to help you move faster and smarter in your job search.
+                  Your Curson account has been successfully created. Curson is a modern platform built to connect talent and companies in a faster, more meaningful way.
                 </p>
 
                 <p style="margin:0 0 12px; font-size:15px; color:#111827; font-weight:600;">
@@ -36,9 +36,9 @@ export const welcomeEmail = (name) => `
                 </p>
 
                 <ul style="margin:0 0 24px 18px; padding:0; color:#374151; font-size:14.5px; line-height:1.6;">
-                  <li>Explore verified and relevant job opportunities</li>
-                  <li>Build a professional profile that stands out</li>
-                  <li>Increase your visibility to recruiters and hiring teams</li>
+                  <li>Discover relevant opportunities or qualified talent</li>
+                  <li>Create a profile that clearly showcases skills, experience, or hiring needs</li>
+                  <li>Engage with a growing professional community through jobs, content, and discussions</li>
                 </ul>
 
                 <a
@@ -58,7 +58,7 @@ export const welcomeEmail = (name) => `
                 </a>
 
                 <p style="margin:32px 0 0; font-size:14px; color:#6b7280; line-height:1.6;">
-                  If you have any questions or need support, our team is always here to help.
+                  If you have any questions or need assistance, feel free to reach out — we’re happy to help.
                 </p>
 
                 <p style="margin:24px 0 0; font-size:14px; color:#111827;">

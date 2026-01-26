@@ -1,7 +1,8 @@
 import cron from 'node-cron';
 import {
   scrapeJobs,
-  scrapeInternshalaJobs,
+  scrapeAshbyJobs,
+ 
   scrapeLinkedInJobs,
   scrapeDarwinboxJobs,
   scrapeFreshteamJobs,
@@ -27,7 +28,8 @@ export const startJobScraperWorker = () => {
 
   // 🔹 Startup scrape (NO LinkedIn here)
   scrapeJobs();
-  scrapeInternshalaJobs();
+  scrapeAshbyJobs();
+
   scrapeCareerPages();
   scrapeDarwinboxJobs();
   scrapeFreshteamJobs();
@@ -40,8 +42,9 @@ export const startJobScraperWorker = () => {
   // ⏰ Hourly cron
   cron.schedule('0 * * * *', async () => {
     await scrapeJobs();
-    await scrapeInternshalaJobs();
+   
     await scrapeCareerPages();
+    await scrapeAshbyJobs();
     await scrapeDarwinboxJobs();
     await scrapeFreshteamJobs();
     await scrapeSmartRecruitersJobs();
