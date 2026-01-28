@@ -14,6 +14,11 @@ import fileRoutes from "./routes/file.routes.js";
 
 /* ========= CORE CONFIG ========= */
 import "./config/passport.js";
+import path from 'path';
+import { fileURLToPath } from 'url';
+import pool from './config/database.js'; // Make sure this path to database.js is correct
+
+// Define __dirname manually because you are using ES Modules
 
 /* ========= ERROR HANDLER ========= */
 import { errorHandler } from "./middleware/errorHandler.js";
@@ -62,6 +67,9 @@ const app = express();
   }
 });
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 /* =====================================================
    ✅ CORS — MUST BE FIRST (THIS FIXES YOUR ERROR)
 ===================================================== */
@@ -90,6 +98,59 @@ app.use(helmet());
 app.use(passport.initialize());
 
 app.use(cookieParser());
+
+/* =====================================================
+   ✅ DYNAMIC META TAGS FOR SOCIAL SHARE (WhatsApp/LinkedIn)
+===================================================== */
+app.get('/job/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // 1. Fetch Job Details
+    const result = await pool.query(
+      `SELECT title, company_name, location, description 
+       FROM jobs 
+       WHERE id = $1`,
+      [id]
+    );
+
+    // If no job found, fallback to normal app
+    // IMPORTANT: Check your actual path to "index.html" in your build folder
+    // It is usually '../frontend/dist/index.html' or '../client/build/index.html'
+    const indexPath = path.resolve(__dirname, '../frontend/dist/index.html'); 
+
+    if (result.rows.length === 0) {
+      return res.sendFile(indexPath);
+    }
+
+    const job = result.rows[0];
+    
+    // 2. Prepare Data
+    const pageTitle = `${job.title} at ${job.company_name} | Curson`;
+    const pageDesc = `Hiring now: ${job.title} in ${job.location}. Click to apply on Curson.`;
+
+    // 3. Inject into HTML
+    fs.readFile(indexPath, 'utf8', (err, htmlData) => {
+      if (err) {
+        console.error('Error reading index.html', err);
+        return res.status(500).send('Server Error');
+      }
+
+      const modifiedHtml = htmlData
+        .replace(/<title>.*?<\/title>/, `<title>${pageTitle}</title>`)
+        .replace(/<meta name="description" content=".*?"\s*\/?>/, `<meta name="description" content="${pageDesc}" />`)
+        .replace(/<meta property="og:title" content=".*?"\s*\/?>/, `<meta property="og:title" content="${pageTitle}" />`)
+        .replace(/<meta property="og:description" content=".*?"\s*\/?>/, `<meta property="og:description" content="${pageDesc}" />`);
+
+      res.send(modifiedHtml);
+    });
+
+  } catch (error) {
+    console.error('Meta tag error:', error);
+    const indexPath = path.resolve(__dirname, '../frontend/dist/index.html');
+    res.sendFile(indexPath);
+  }
+});
 /* =====================================================
    ROUTES
 ===================================================== */
