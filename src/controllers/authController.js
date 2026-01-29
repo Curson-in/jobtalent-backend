@@ -4,7 +4,6 @@ import pool from '../config/database.js';
 import { USER_ROLES } from '../config/constants.js';
 import { sendWelcome } from '../services/email/email.events.js';
 
-
 export const signup = async (req, res, next) => {
   try {
     const { email, password, role, firstName, lastName } = req.body;
@@ -14,14 +13,13 @@ export const signup = async (req, res, next) => {
     }
 
     // 🔐 Password must contain letters + numbers (min 6)
-const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{6,}$/;
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{6,}$/;
 
-if (!passwordRegex.test(password)) {
-  return res.status(400).json({
-    message: 'Password must be at least 6 characters and include letters and numbers'
-  });
-}
-
+    if (!passwordRegex.test(password)) {
+      return res.status(400).json({
+        message: 'Password must be at least 6 characters and include letters and numbers'
+      });
+    }
     
     if (!Object.values(USER_ROLES).includes(role)) {
       return res.status(400).json({ message: 'Invalid role' });
@@ -47,15 +45,24 @@ if (!passwordRegex.test(password)) {
     );
 
     sendWelcome({
-  email: user.email,
-  name: user.first_name,
-});
+      email: user.email,
+      name: user.first_name,
+    });
     
     const token = jwt.sign(
       { userId: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRY || '7d' }
     );
+
+    // ✅ COOKIE ADDED HERE
+    const sevenDays = 7 * 24 * 60 * 60 * 1000;
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      maxAge: sevenDays
+    });
     
     res.status(201).json({
       message: 'User created successfully',
@@ -99,6 +106,15 @@ export const login = async (req, res, next) => {
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRY || '7d' }
     );
+
+    // ✅ COOKIE ADDED HERE
+    const sevenDays = 7 * 24 * 60 * 60 * 1000;
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      maxAge: sevenDays
+    });
     
     res.json({
       message: 'Login successful',
