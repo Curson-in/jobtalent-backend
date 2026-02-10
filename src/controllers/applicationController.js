@@ -94,36 +94,70 @@ export const getApplicationsForJob = async (req, res, next) => {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
-    // ✅ FETCH APPLICATIONS + RESUME
-   const result = await pool.query(
-  `
-  SELECT 
-    a.id,
-    a.user_id,        -- 🔥 REQUIRED
-    a.job_id,
-    a.status,
-    a.created_at,
-    u.first_name,
-    u.last_name,
-    u.email,
-    p.resume_file
-  FROM applications a
-  JOIN users u ON a.user_id = u.id
-  LEFT JOIN profiles p 
-    ON p.user_id = u.id 
-   AND p.profile_type = 'talent'
-  WHERE a.job_id = $1
-  ORDER BY a.created_at DESC
-  `,
-  [jobId]
-);
+    // ✅ FETCH APPLICANTS + SMART SORTING
+    const result = await pool.query(
+      `
+      SELECT 
+        a.id,
+        a.user_id,
+        a.job_id,
+        a.status,
+        a.created_at,
+        u.first_name,
+        u.last_name,
+        u.email,
+        p.resume_file,
+        p.profile_picture_url,
+        p.desired_role,
+        p.experience,
 
+        -- 1. CALCULATE SKILL MATCH SCORE (0-100)
+        COALESCE(
+          ROUND(
+            (
+              SELECT COUNT(*)::numeric 
+              FROM talent_skills ts 
+              WHERE ts.user_id = u.id 
+              -- Case-insensitive match logic
+              AND LOWER(ts.skill) IN (
+                SELECT LOWER(skill) FROM job_skills WHERE job_id = $1
+              )
+            ) 
+            / NULLIF((SELECT COUNT(*) FROM job_skills WHERE job_id = $1), 0) 
+            * 100
+          ), 
+          0
+        ) as match_score,
+
+        -- 2. CALCULATE RESUME STATUS (0 or 1)
+        CASE 
+          WHEN p.resume_file IS NOT NULL AND p.resume_file <> '' THEN 1 
+          ELSE 0 
+        END as has_resume
+
+      FROM applications a
+      JOIN users u ON a.user_id = u.id
+      LEFT JOIN profiles p 
+        ON p.user_id = u.id 
+        AND p.profile_type = 'talent'
+      WHERE a.job_id = $1
+      
+      -- 🔥 SORT ORDER: High Skills > Has Resume > Recent Date
+      ORDER BY 
+        match_score DESC, 
+        has_resume DESC, 
+        a.created_at DESC
+      `,
+      [jobId]
+    );
 
     res.json({ applications: result.rows });
   } catch (error) {
     next(error);
   }
 };
+
+
 
 
 export const updateApplicationStatus = async (req, res, next) => {

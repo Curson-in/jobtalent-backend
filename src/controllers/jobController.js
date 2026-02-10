@@ -13,71 +13,158 @@ const JOB_TYPE_MAP = {
   'part-time': ['part time', 'part-time']
 };
 
-/* =========================
-   CREATE JOB (DIRECT)
-========================= */
 export const createJob = async (req, res, next) => {
+  const client = await pool.connect(); // 🔥 Use Client for Transaction
+  
   try {
     const { title, description, location, salary, skills, jobType } = req.body;
     const userId = req.user.id;
 
-    const companyResult = await pool.query(
+    await client.query('BEGIN'); // Start Transaction
+
+    // 1️⃣ Check Company Profile
+    const companyResult = await client.query(
       'SELECT id FROM companies WHERE user_id = $1',
       [userId]
     );
 
     if (companyResult.rows.length === 0) {
+      await client.query('ROLLBACK');
       return res.status(400).json({ message: 'Company profile not set up' });
     }
-
     const companyId = companyResult.rows[0].id;
 
-    const result = await pool.query(
+    // 2️⃣ Check Plan Limits (Gatekeeper)
+    const usageRes = await client.query(
+      `SELECT jobs_posted_count, current_plan FROM company_usage WHERE user_id = $1`, 
+      [userId]
+    );
+    const usage = usageRes.rows[0] || { jobs_posted_count: 0, current_plan: 'free_trial' };
+
+    // Define Limits
+    let limit = 2; // Free Trial
+    if (usage.current_plan === 'starter') limit = 3;
+    if (usage.current_plan === 'growth') limit = 10;
+    if (usage.current_plan === 'pro') limit = 9999; // Unlimited
+
+    if (usage.jobs_posted_count >= limit) {
+      await client.query('ROLLBACK');
+      return res.status(403).json({ 
+        message: `Job posting limit reached (${usage.jobs_posted_count}/${limit}). Please upgrade your plan.` 
+      });
+    }
+
+    // 3️⃣ Insert Job
+    const result = await client.query(
       `
       INSERT INTO jobs (
-        company_id,
-        title,
-        description,
-        location,
-        salary,
-        job_type,
-        source,
-        status,
-        created_at
+        company_id, title, description, location, salary, job_type, source, status, created_at
       )
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW())
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
       RETURNING *
       `,
       [
-        companyId,
-        title,
-        description,
-        location,
-        salary,
-        jobType,
-        JOB_SOURCES.DIRECT,
-        'active'
+        companyId, title, description, location, salary, jobType,
+        JOB_SOURCES.DIRECT, 'active'
       ]
     );
 
+    const jobId = result.rows[0].id;
+
+    // 4️⃣ Insert Skills
     if (skills?.length) {
       for (const skill of skills) {
-        await pool.query(
+        await client.query(
           'INSERT INTO job_skills (job_id, skill) VALUES ($1, $2)',
-          [result.rows[0].id, skill]
+          [jobId, skill]
         );
       }
     }
 
+    // 5️⃣ Increment Usage Count
+    await client.query(
+      `INSERT INTO company_usage (user_id, jobs_posted_count) 
+       VALUES ($1, 1) 
+       ON CONFLICT (user_id) 
+       DO UPDATE SET jobs_posted_count = company_usage.jobs_posted_count + 1`,
+      [userId]
+    );
+
+    await client.query('COMMIT'); // Commit Transaction
+
     res.status(201).json({ job: result.rows[0] });
+
   } catch (err) {
+    await client.query('ROLLBACK'); // Rollback on error
     next(err);
+  } finally {
+    client.release(); // Release client back to pool
   }
 };
 
-/* =========================
-   FEED (ONE JOB PER COMPANY)
-========================= */
+export const updateJob = async (req, res) => {
+  const { id } = req.params;
+  const { title, description, location, salary, jobType, skills } = req.body;
+  const userId = req.user.id; 
+
+  const client = await pool.connect(); // Use a client for transaction
+
+  try {
+    await client.query('BEGIN');
+
+    // 1. Verify Ownership (Security Check)
+    const check = await client.query(
+      `SELECT j.id 
+       FROM jobs j
+       JOIN companies c ON j.company_id = c.id
+       WHERE j.id = $1 AND c.user_id = $2`,
+      [id, userId]
+    );
+
+    if (check.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(403).json({ message: "Not authorized to edit this job" });
+    }
+
+    // 2. Update Basic Info
+    const result = await client.query(
+      `UPDATE jobs 
+       SET title = $1, description = $2, location = $3, salary = $4, job_type = $5, updated_at = NOW()
+       WHERE id = $6 RETURNING *`,
+      [title, description, location, salary, jobType, id]
+    );
+
+    // 3. Update Skills (Delete Old -> Insert New)
+    if (skills && Array.isArray(skills)) {
+      // First, remove existing skills for this job
+      await client.query('DELETE FROM job_skills WHERE job_id = $1', [id]);
+      
+      // Then, insert the new set of skills
+      for (const skill of skills) {
+        await client.query(
+          'INSERT INTO job_skills (job_id, skill) VALUES ($1, $2)',
+          [id, skill.trim()] // Ensure we trim whitespace
+        );
+      }
+    }
+
+    await client.query('COMMIT');
+
+    // Return the updated job with the new skills attached
+    const updatedJob = result.rows[0];
+    updatedJob.skills = skills; 
+
+    res.status(200).json({ message: "Job updated successfully", job: updatedJob });
+
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error("Error updating job:", error);
+    res.status(500).json({ message: "Server error updating job" });
+  } finally {
+    client.release();
+  }
+};
+
 export const getFeedJobs = async (req, res, next) => {
   try {
     const jobs = await fetchFeedJobs();
@@ -221,7 +308,7 @@ export const getEmployerJobs = async (req, res, next) => {
   try {
     const userId = req.user.id;
 
-    // get company for this employer
+    // 1. Get Company ID
     const companyResult = await pool.query(
       'SELECT id FROM companies WHERE user_id = $1',
       [userId]
@@ -233,19 +320,25 @@ export const getEmployerJobs = async (req, res, next) => {
 
     const companyId = companyResult.rows[0].id;
 
+    // 2. Fetch Jobs WITH Skills using array_agg
     const jobsResult = await pool.query(
       `
-      SELECT *
-      FROM jobs
-      WHERE company_id = $1
-      AND status = 'active'
-      ORDER BY created_at DESC
+      SELECT j.*, 
+             COALESCE(
+               (SELECT array_agg(skill) FROM job_skills WHERE job_id = j.id), 
+               '{}'
+             ) AS skills
+      FROM jobs j
+      WHERE j.company_id = $1
+      AND j.status = 'active'
+      ORDER BY j.created_at DESC
       `,
       [companyId]
     );
 
     res.json({ jobs: jobsResult.rows });
   } catch (err) {
+    console.error("Error fetching employer jobs:", err);
     next(err);
   }
 };

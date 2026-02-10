@@ -22,7 +22,7 @@ export const sendOtp = async (req, res) => {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
 
-  await pool.uery(
+  await pool.query(
     `
     INSERT INTO password_otps (email, otp, expires_at)
     VALUES ($1, $2, $3)

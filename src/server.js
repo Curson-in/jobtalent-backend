@@ -52,6 +52,7 @@ import subscriptionRoutes from "./routes/subscriptionRoutes.js";
 import boostRoutes from "./routes/boostRoutes.js";
 import razorpayRoutes from "./routes/razorpay.routes.js";
 import blogRoutes from "./routes/blog.routes.js";
+import onboardingRoutes from './routes/onboarding.routes.js';
 
 
 
@@ -156,7 +157,7 @@ app.get('/job/:id', async (req, res) => {
 ===================================================== */
 app.use("/api", cashfreeRoutes);
 // Payments (includes create-subscription + webhook)
-
+app.use('/api/onboarding', onboardingRoutes);
 // Auth
 app.use("/api/auth", authRoutes);
 app.use("/api/auth", googleAuthRoutes);

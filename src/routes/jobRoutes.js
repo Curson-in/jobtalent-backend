@@ -67,4 +67,6 @@ router.get(
   jobController.getJobMatchScore
 );
 
+router.put('/:id', authMiddleware, requireRole([USER_ROLES.EMPLOYER]), jobController.updateJob);
+
 export default router;
