@@ -1,6 +1,6 @@
 export const PLAN_CONFIG = {
   free_trial: {
-    limits: { jobs: 2, invites: 5, searches: 5, saves: 5 },
+    limits: { jobs: 2, invites: 0, searches: 0, saves: 0 },
     duration_days: 36500
   },
   starter: {

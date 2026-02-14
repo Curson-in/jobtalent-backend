@@ -46,7 +46,7 @@ export const searchCandidates = async (req, res) => {
     };
 
     // 2️⃣ Plan limits
-    let limit = 5;
+    let limit = 0;
     if (usage.current_plan === "starter") limit = 10;
     if (usage.current_plan === "growth") limit = 30;
     if (usage.current_plan === "pro") limit = 100;
@@ -207,7 +207,7 @@ export const inviteCandidate = async (req, res) => {
     const usage = usageRes.rows[0] || { invites_used_count: 0, current_plan: 'free_trial' };
 
     // 2️⃣ Check Limits
-    let limit = 5; // Free default
+    let limit = 0; // Free default
     if (usage.current_plan === 'starter') limit = 5;
     if (usage.current_plan === 'growth') limit = 15;
     if (usage.current_plan === 'pro') limit = 60;

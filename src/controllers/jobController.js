@@ -42,7 +42,7 @@ export const createJob = async (req, res, next) => {
     const usage = usageRes.rows[0] || { jobs_posted_count: 0, current_plan: 'free_trial' };
 
     // Define Limits
-    let limit = 2; // Free Trial
+    let limit = 0; // Free Trial
     if (usage.current_plan === 'starter') limit = 3;
     if (usage.current_plan === 'growth') limit = 10;
     if (usage.current_plan === 'pro') limit = 9999; // Unlimited
