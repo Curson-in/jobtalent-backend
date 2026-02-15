@@ -202,6 +202,7 @@ export const getJobs = async (req, res) => {
       AND (
         j.title ILIKE $${values.length} 
         OR j.company_name ILIKE $${values.length}
+        OR c.name ILIKE $${values.length}
         OR j.location ILIKE $${values.length}
       )
     `;

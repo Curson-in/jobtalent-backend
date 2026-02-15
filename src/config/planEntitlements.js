@@ -2,14 +2,14 @@ export const PLAN_ENTITLEMENTS = {
   free: {
     resumeEnhance: false,
     jobMatch: false,
-    followUpsPerMonth: 0,
+    followUpsPerMonth: 5,
     boostDays: 0
   },
 
   monthly_99: {
     resumeEnhance: true,
     jobMatch: false,
-    followUpsPerMonth: 0,
+    followUpsPerMonth: 28,
     boostDays: 7
   },
 
