@@ -10,7 +10,7 @@ export const requirePremium = async (req, res, next) => {
   );
 
   if (!result.rows.length) {
-    return res.status(403).json({ message: "Premium required" });
+    router.post("/jobs", requireAuth, createJob);
   }
 
   next();

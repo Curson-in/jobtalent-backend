@@ -42,9 +42,9 @@ export const createJob = async (req, res, next) => {
     const usage = usageRes.rows[0] || { jobs_posted_count: 0, current_plan: 'free_trial' };
 
     // Define Limits
-    let limit = 0; // Free Trial
-    if (usage.current_plan === 'starter') limit = 3;
-    if (usage.current_plan === 'growth') limit = 10;
+    let limit = 2; // Free Trial
+    if (usage.current_plan === 'starter') limit = 5;
+    if (usage.current_plan === 'growth') limit = 15;
     if (usage.current_plan === 'pro') limit = 9999; // Unlimited
 
     if (usage.jobs_posted_count >= limit) {
@@ -83,10 +83,10 @@ export const createJob = async (req, res, next) => {
 
     // 5️⃣ Increment Usage Count
     await client.query(
-      `INSERT INTO company_usage (user_id, jobs_posted_count) 
-       VALUES ($1, 1) 
-       ON CONFLICT (user_id) 
-       DO UPDATE SET jobs_posted_count = company_usage.jobs_posted_count + 1`,
+      `INSERT INTO company_usage (user_id, jobs_posted_count, current_plan)
+VALUES ($1, 1, 'free_trial')
+ON CONFLICT (user_id)
+DO UPDATE SET jobs_posted_count = company_usage.jobs_posted_count + 1`,
       [userId]
     );
 
