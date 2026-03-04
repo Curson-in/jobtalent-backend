@@ -42,10 +42,10 @@ export const createJob = async (req, res, next) => {
     const usage = usageRes.rows[0] || { jobs_posted_count: 0, current_plan: 'free_trial' };
 
     // Define Limits
-    let limit = 2; // Free Trial
-    if (usage.current_plan === 'starter') limit = 5;
-    if (usage.current_plan === 'growth') limit = 15;
-    if (usage.current_plan === 'pro') limit = 9999; // Unlimited
+let limit = 2; // free_trial
+if (usage.current_plan === 'starter') limit = 3;
+if (usage.current_plan === 'growth') limit = 10;
+if (usage.current_plan === 'pro') limit = 9999; // unlimited
 
     if (usage.jobs_posted_count >= limit) {
       await client.query('ROLLBACK');
